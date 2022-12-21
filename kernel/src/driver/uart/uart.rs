@@ -153,7 +153,7 @@ impl UartDriver {
     /// @param str 发送字符切片
     /// @return None
     #[allow(dead_code)]
-    fn uart_send(uart_port: &UartPort, str: &str) {
+    pub fn uart_send(uart_port: &UartPort, str: &str) {
         let port = uart_port.to_u16();
         while UartDriver::is_transmit_empty(port) == false {
             for c in str.bytes() {
@@ -166,7 +166,7 @@ impl UartDriver {
     /// @param uart_port 端口号
     /// @return 接收的字节
     #[allow(dead_code)]
-    fn uart_read_byte(uart_port: &UartPort) -> char {
+    pub fn uart_read_byte(uart_port: &UartPort) -> char {
         let port = uart_port.to_u16();
         while UartDriver::serial_received(port) == false {} //TODO:pause
         unsafe { io_in8(port) as char }
