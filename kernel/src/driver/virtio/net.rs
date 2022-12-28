@@ -1,28 +1,26 @@
 use virtio_drivers::{
-    DeviceType, Transport, VirtIONet
+    DeviceType, Transport, VirtIONet, MmioTransport, VirtIOHeader
 };
-use crate::include::bindings::bindings::{
-    process_control_block, sched_enqueue, PROC_RUNNING, PROC_STOPPED,
+use core::{str, ptr::NonNull};
+use fdt::{node::FdtNode, standard_nodes::Compatible, Fdt};
+use crate::{
+    include::bindings::bindings::{},
+    kBUG, kdebug, kerror, kwarn
 };
-use core::{sync::atomic::Ordering, str, format_args};
-use crate::driver::uart::uart::{UartDriver, UartPort};
 use self::virtio_impl::HalImpl;
 
 mod virtio_impl;
 
-fn virtio_device(transport: impl Transport) {
-    match transport.device_type() {
-        DeviceType::Network => virtio_net(transport),
-        _ => UartDriver::uart_send(&UartPort::COM1, "Unrecognized virtio device"),
+const NETWORK_CLASS = 0x2;
+const ETHERNET_SUBCLASS = 0x0;
+
+fn get_net_pci_mmio() -> u32 {
+    virtio_net_pci_dev: *mut *mut pci_device_structure_general_device_t;
+    count: u32 = 0;
+    unsafe {
+        pci_get_device_structure(NETWORK_CLASS, ETHERNET_SUBCLASS, virtio_net_pci_devs, &count);
     }
 }
 
-fn virtio_net<T: Transport>(transport: T) {
-    let mut net = VirtIONet::<HalImpl, T>::new(transport).expect("failed to create net driver");
-    let mut buf = [0u8; 0x100];
-    let len = net.recv(&mut buf).expect("failed to recv");
-    let rec = str::from_utf8(&buf[..len]).expect("fail to convert str");
-    UartDriver::uart_send(&UartPort::COM1, &rec);
-    net.send(&buf[..len]).expect("failed to send");
-    UartDriver::uart_send(&UartPort::COM1, "virtio-net test finished");
-}
+
+
